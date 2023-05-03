@@ -20,18 +20,19 @@ data "aws_vpc" "default_vpc" {
 }
 
 ## Key pair
-resource "aws_key_pair" "rulezz-ec2-kp" {
-  key_name = "rulezz-ec2-kp"
-  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCuZCC/1xyUVIrKueDGZ9YsQmo4AgP0T1Ms5JQBlCY/G3W6qjlP/sGGf1wm/6fYIbhBEvEAU9JvaAnSkMq7wyMzonqyH+/f8kTW7hwuADO0+S9Y8RF/Y3l34O0LjZneChAZ/vGSruHAo0/zrS+8yH+MkQ5Lj0C3cI6yWXqW15GoKGQDsC+TZSFfcxTCJpq66rNlVLexRX9btuxJ+rV+NDC92JcZ/QCEWZ/VDNvSvLKxRo/NBLdVp/jcmj6UTl/CO+ipAjFI8A6HOdIyldKkzO5UaGDCcMKQvFQ0uKureHZKO/lp14DUe072fLlMN6wL4EICp9Y82FPB46AOfzEN7BaF rulezz-ec2-kp"
+resource "aws_key_pair" "ec2-kp" {
+  key_name   = var.key-name
+  public_key = var.public-key
 }
 
 ## SUBNET
 resource "aws_subnet" "subnet-1" {
-  vpc_id     = data.aws_vpc.default_vpc.id
-  cidr_block = "172.31.64.0/20"
+  vpc_id            = data.aws_vpc.default_vpc.id
+  cidr_block        = var.subnet-cidr
+  availability_zone = var.zone
 
   tags = {
-    Name = "subnet1"
+    Name = var.subnet-name
   }
 }
 
@@ -85,42 +86,47 @@ resource "aws_security_group" "default" {
 ## NGINX PROXY
 resource "aws_instance" "nginx_instance" {
   # ami             = data.aws_ami.debian-11.id
-  ami                         = "ami-0c1b4dff690b5d229"
-  instance_type               = "t2.micro"
+  ami                         = var.ami-id
+  instance_type               = var.environment-machine-type[var.target-environment]
   security_groups             = [aws_security_group.default.name]
   subnet_id                   = aws_subnet.subnet-1.id
   associate_public_ip_address = true
-  key_name                    = aws_key_pair.rulezz-ec2-kp.key_name
+  key_name                    = aws_key_pair.ec2-kp.key_name
 
   tags = {
-    Name = "nginx-proxy"
+    Name        = "nginx-proxy"
+    environment = var.environment-map[var.target-environment]
   }
 }
 
 ## WEB1
-resource "aws_instance" "web1" {
+resource "aws_instance" "web-instances" {
   # ami             = data.aws_ami.debian-11.id
-  ami                         = "ami-0c1b4dff690b5d229"
-  instance_type               = "t2.micro"
+  count = 1
+
+  ami                         = var.ami-id
+  instance_type               = var.environment-machine-type[var.target-environment]
   security_groups             = [aws_security_group.default.name]
   subnet_id                   = aws_subnet.subnet-1.id
-  key_name                    = aws_key_pair.rulezz-ec2-kp.key_name
+  key_name                    = aws_key_pair.ec2-kp.key_name
 
   tags = {
-    Name = "web1"
+    Name        = "web${count.index}"
+    environment = var.environment-map[var.target-environment]
   }
 }
 
 ## DB
 resource "aws_instance" "mysqldb" {
   # ami             = data.aws_ami.debian-11.id
-  ami                         = "ami-0c1b4dff690b5d229"
-  instance_type               = "t2.micro"
+  ami                         = var.ami-id
+  instance_type               = var.environment-machine-type[var.target-environment]
   security_groups             = [aws_security_group.default.name]
   subnet_id                   = aws_subnet.subnet-1.id
-  key_name                    = aws_key_pair.rulezz-ec2-kp.key_name
+  key_name                    = aws_key_pair.ec2-kp.key_name
 
   tags = {
-    Name = "mysqldb"
+    Name        = "mysqldb"
+    environment = var.environment-map[var.target-environment]
   }
 }
