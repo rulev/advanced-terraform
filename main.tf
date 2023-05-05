@@ -39,47 +39,78 @@ resource "aws_subnet" "subnet-1" {
 resource "aws_security_group" "default" {
   name = "test-firewall"
 
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "icmp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # ingress {
+  #   from_port   = 0
+  #   to_port     = 0
+  #   protocol    = "icmp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # ingress {
+  #   from_port   = 80
+  #   to_port     = 80
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # ingress {
+  #   from_port   = 8080
+  #   to_port     = 8080
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
-  ingress {
-    from_port   = 1000
-    to_port     = 2000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # ingress {
+  #   from_port   = 1000
+  #   to_port     = 2000
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # ingress {
+  #   from_port   = 22
+  #   to_port     = 22
+  #   protocol    = "tcp"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # egress {
+  #   from_port   = 0
+  #   to_port     = 0
+  #   protocol    = "-1"
+  #   cidr_blocks = ["0.0.0.0/0"]
+  # }
+}
+
+# resource "aws_security_group_rule" "ingress_rules" {
+#   count = length(var.fw-port-list)
+#   security_group_id = aws_security_group.default.id
+#   from_port = var.fw-port-list[count.index][0]
+#   to_port = var.fw-port-list[count.index][1]
+#   cidr_blocks = ["0.0.0.0/0"]
+#   protocol = "tcp"
+#   type = "ingress"
+# }
+
+# resource "aws_security_group_rule" "extra_rules" {
+#   for_each = var.fw-port-map
+#   security_group_id = aws_security_group.default.id
+#   description = each.key
+#   from_port = each.value[0]
+#   to_port = each.value[1]
+#   cidr_blocks = ["0.0.0.0/0"]
+#   protocol = "tcp"
+#   type = "ingress"
+# }
+
+resource "aws_security_group_rule" "combined_rules" {
+  count = length(var.fw-port-obj)
+  security_group_id = aws_security_group.default.id
+  type = var.fw-port-obj[count.index].type
+  from_port = var.fw-port-obj[count.index].low
+  to_port = var.fw-port-obj[count.index].high
+  cidr_blocks = var.fw-port-obj[count.index].cidr
+  protocol = var.fw-port-obj[count.index].proto
 }
 
 ### COMPUTE

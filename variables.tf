@@ -43,9 +43,41 @@ variable "ami-id" {
   default = "ami-0c1b4dff690b5d229"
 }
 
-variable "firewall-ports" {
-  type = list
-  default = ["80", "8080", "1000-2000", "22"]
+variable "fw-port-map" {
+  type = map(list(number))
+  default = {
+    "r1" = [80, 80]
+    "r2" = [8080, 8080]
+    "r3" = [1000, 2000]
+    "r4" = [22, 22]
+  }
+}
+
+variable "fw-port-list" {
+  type = list(list(number))
+  default = [
+    [80, 80],
+    [8080, 8080],
+    [1000, 2000],
+    [22, 22],
+  ]
+}
+
+variable "fw-port-obj" {
+  type = list(object({
+    type = string
+    low = number
+    high = number
+    proto = string
+    cidr = list(string)
+  }))
+
+  default = [
+    {type = "ingress", low = 0, high = 0, proto = "icmp", cidr = [ "0.0.0.0/0" ]},
+    {type = "ingress", low = 80, high = 80, proto = "tcp", cidr = [ "0.0.0.0/0" ]},
+    {type = "ingress", low = 8080, high = 8080, proto = "tcp", cidr = [ "0.0.0.0/0" ]},
+    {type = "egress", low = 0, high = 0, proto = "-1", cidr = [ "0.0.0.0/0" ]},
+  ]
 }
 
 variable "target-environment" {

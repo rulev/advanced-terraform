@@ -36,3 +36,5 @@ terraform.rc
 
 # Ignore lockfile
 .terraform.lock.hcl
+
+functions_test
