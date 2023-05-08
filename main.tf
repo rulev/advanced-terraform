@@ -130,21 +130,12 @@ resource "aws_instance" "nginx_instance" {
   }
 }
 
-## WEB1
-resource "aws_instance" "web-instances" {
-  # ami             = data.aws_ami.debian-11.id
-  count = 1
-
-  ami                         = var.ami-id
-  instance_type               = var.environment-machine-type[var.target-environment]
-  security_groups             = [aws_security_group.default.name]
-  subnet_id                   = aws_subnet.subnet-1.id
-  key_name                    = aws_key_pair.ec2-kp.key_name
-
-  tags = {
-    Name        = "web${count.index}"
-    environment = var.environment-map[var.target-environment]
-  }
+## WEB
+module "web_nst" {
+  source = "./modules/web-instances"
+  subnet = aws_subnet.subnet-1.id
+  sg = aws_security_group.default.name
+  key-name = aws_key_pair.ec2-kp.key_name
 }
 
 ## DB
